@@ -37,6 +37,11 @@ route.post('/login',(req,res,next)=>{
             let err=new Error('User not registered');
             err.status=401;
             return next(err);
+        }else if(user.verify==false)
+        {
+            let err=new Error('Please verify your account');
+            err.status=401;
+            return next(err);
         }
         else{
             bcrypt.compare(req.body.password,user.password)
