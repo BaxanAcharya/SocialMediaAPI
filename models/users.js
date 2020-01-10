@@ -1,0 +1,40 @@
+const mongoose=require('mongoose');
+const userSchema=new mongoose.Schema({
+    firstName:{
+        type:String,
+        require:true,
+    },
+    lastName:{
+        type:String,
+        require:true
+    },
+    emailPhone:{
+        type:String,
+        required:true
+    },
+    username:{
+        type:String,
+        require:true,
+        unique:true,
+        minlength:6
+    },
+    password:{
+        type:String,
+        required:true,
+        minlength:8
+    },
+    image:{
+        type:String
+    },
+    dob:{
+        type:Date
+    },
+    reg_date:{
+        type:Date,
+        default:new Date()
+    },
+    verify:{
+        type:Boolean,
+        default:false
+    }
+})
