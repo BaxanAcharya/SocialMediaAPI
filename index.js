@@ -4,6 +4,7 @@ const morgan=require('morgan');
 const dotenv=require('dotenv').config();
 const cors=require('cors');
 const userRoute=require('./controllers/users');
+// const emailRoute=require('./controllers/mailer')
 const uploadImageRoute=require("./controllers/profileImageUpload")
 
 const app=express();
@@ -21,6 +22,8 @@ mongoose.connect(process.env.URL,{useNewUrlParser:true,useUnifiedTopology:true, 
 
 app.use('/users',userRoute);
 app.use('/uploadProfile',uploadImageRoute)
+// app.use('/verify',emailRoute)
+
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.statusCode = 500;

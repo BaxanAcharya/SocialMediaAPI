@@ -3,28 +3,65 @@ const bcrypt=require('bcryptjs');
 const jwttoken=require('jsonwebtoken');
 const User=require('../models/users');
 const route=express.Router();
+const nodemailer = require('nodemailer');
 
+var LoggedUserId="";
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user:process.env.MAILUSER, // here use your real email
+      pass: process.env.MAILPASSWORD // put your password correctly (not in this question please)
+    }
+  });
 
 route.post('/register',(req,res,next) =>{
-    let password=req.body.password;
-    bcrypt.hash(password,10,function(err,hash){
-        if(err){
-            let err=new Error('Error during hashing');
-            err.status=500;
+    console.log(LoggedUserId)
+    var mailOptions = {
+        from: process.env.MAILUSER, // sender address
+        to: req.body.emailPhone, // list of receivers
+        subject: 'Email conformation for your app', // Subject line
+        html: req.body.firstName + req.body.lastName+
+        '<h1>Please Click this link to confirm your account: </h1> http://localhost:'+ 
+        process.env.PORT+"/verify/email/"+LoggedUserId
+      // plain text body
+      };
+    User.findOne({emailPhone:req.body.emailPhone})
+    .then((user)=>{
+        if(user==null)
+        {
+            transporter.sendMail(mailOptions, function (err, info) {
+                if(err){
+                    res.send(err) 
+                } 
+                else{
+                    let password=req.body.password;
+                    bcrypt.hash(password,10,function(err,hash){
+                        if(err){
+                            let err=new Error('Error during hashing');
+                            err.status=500;
+                            return next(err);
+                        }
+                        User.create({
+                            firstName:req.body.firstName,
+                            lastName:req.body.lastName,
+                            emailPhone:req.body.emailPhone,
+                            password:hash,
+                            image:req.body.image,
+                            dob:req.body.dob
+                        }).then((user) =>{
+                           // LoggedUserId=user._id;
+                            console.log(LoggedUserId);
+                            let token=jwttoken.sign({_id:user._id}, process.env.SECRET);
+                            res.json({status:"Registered!!!!",token:token});
+                        }).catch(next);
+                    });
+                }  
+             });
+        }else{
+            let err=new Error('Email already registered');
+            err.status=401;
             return next(err);
         }
-        User.create({
-            firstName:req.body.firstName,
-            lastName:req.body.lastName,
-            emailPhone:req.body.emailPhone,
-            username:req.body.username,
-            password:hash,
-            image:req.body.image,
-            dob:req.body.dob
-        }).then((user) =>{
-            let token=jwttoken.sign({_id:user._id}, process.env.SECRET);
-            res.json({status:"Registered!!!!",token:token});
-        }).catch(next);
     });
 });
 
