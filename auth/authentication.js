@@ -1,31 +1,23 @@
-const jwtauth=require('jsonwebtoken');
-const User=require('../models/users');
+const jwt = require('jsonwebtoken');
+const User = require('../models/users');
 
-const verifyUser=(req,res,next)=>{
-    let authicateHeader=req.headers.authorization;
-    if(!authicateHeader){
-        let err=new Error("Please set bearer token");
-        err.status=401;
+module.exports.verifyUser = (req, res, next) => {
+    let authHeader = req.headers.authorization;
+    if (!authHeader) {
+        let err = new Error("You have not set Bearer token!");
+        err.status = 401;
         return next(err);
     }
-    let token=authicateHeader.split('')[1];
+    let token = authHeader.split(' ')[1];
     let data;
-    try{
-        data=jwtauth.verify(token,process.env.SECRET,(err,result)=>{
-            if(!result===null){
-                next();
-            }else{
-                next(err);
-            }
-        });
-    }catch(err){
-        throw new Error('Json web token not valid!');
+    try {
+        data = jwt.verify(token, process.env.SECRET);
+    } catch (err) {
+        throw new Error('Invalid token!');
     }
-
     User.findById(data._id)
-    .then((user)=>{
-        req.user=user;
-        next();
-    })
-
+        .then((user) => {
+            req.user = user;
+            next();
+        })
 }
