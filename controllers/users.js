@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const auth=require('../auth/authentication');
 
 
-var LoggedUserId="";
+
 var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -17,26 +17,12 @@ var transporter = nodemailer.createTransport({
   });
 
 route.post('/register',(req,res,next) =>{
-    console.log("userid: "+LoggedUserId)
-    var mailOptions = {
-        from: process.env.MAILUSER, // sender address
-        to: req.body.emailPhone, // list of receivers
-        subject: 'Email confirmation for your account: Social Media App', // Subject line
-        html: req.body.firstName + req.body.lastName+
-        '<h1>Please Click this link to confirm your account: </h1> http://localhost:'+ 
-        process.env.PORT+"/verify/email/"+LoggedUserId
-      // plain text body
 
-      };
     User.findOne({emailPhone:req.body.emailPhone})
     .then((user)=>{
         if(user==null)
         {
-            transporter.sendMail(mailOptions, function (err, info) {
-                if(err){
-                    res.send(err) 
-                } 
-                else{
+           
                     let password=req.body.password;
                     bcrypt.hash(password,10,function(err,hash){
                         if(err){
@@ -53,14 +39,32 @@ route.post('/register',(req,res,next) =>{
                             dob:req.body.dob
                         }).then((user) =>{
                             LoggedUserId=user._id;
-                            console.log(LoggedUserId);
-                            let token=jwttoken.sign({_id:user._id}, process.env.SECRET);
-                            res.json({status:"Registered!!!!",token:token});
+
+                            var mailOptions = {
+                                from: process.env.MAILUSER, // sender address
+                                to: req.body.emailPhone, // list of receivers
+                                subject: 'Email confirmation for your account: Social Media App', // Subject line
+                                html: req.body.firstName + req.body.lastName+
+                                '<h1>Please Click this link to confirm your account: </h1> http://localhost:'+ 
+                                process.env.PORT+"/users/verify/"+LoggedUserId
+                              // plain text body
+                              };
+
+                              transporter.sendMail(mailOptions, function (err, info) {
+                                if(err){
+                                    res.send(err) 
+                                } 
+                                else{
+                                    let token=jwttoken.sign({_id:user._id}, process.env.SECRET);
+                            res.json({status:"Registered!!!!",token:token, message:info});
+                                }
                         }).catch(next);
                     });
-                }  
+               // }  
              });
-        }else{
+        }
+        
+        else{
             let err=new Error('Email already registered');
             err.status=401;
             return next(err);
@@ -98,6 +102,26 @@ route.post('/login',(req,res,next)=>{
     }).catch(next);
 });
 
+
+route.get('/verify/:id', (req,res,next)=>{
+   var id=req.params.id;
+   User.findOne({_id:id})
+    .then((user)=>{
+        if(user==null){
+            res.json("No user to verify");
+        }else{
+            User.update({_id:id},
+               {
+                   verify:true
+               }
+             ).then((user1)=>{
+             res.json("You are verified!!!!")
+            }
+             ).catch(next)
+        }
+    })
+    .catch(next)
+})
 
 route.get('/userProfile', auth.verifyUser,(req,res)=>{
     res.json(
