@@ -26,15 +26,18 @@ route.post('/register',(req,res,next) =>{
                     let password=req.body.password;
                     bcrypt.hash(password,10,function(err,hash){
                         if(err){
-                            let err=new Error('Error during hashing');
-                            err.status=500;
-                            return next(err);
+                            // let err=new Error('Error during hashing');
+                            // err.status=500;
+                            // return next(err);
+
+                            res.json({status:500, message:'Error while hasing'})
                         }
                         User.create({
                             firstName:req.body.firstName,
                             lastName:req.body.lastName,
                             emailPhone:req.body.emailPhone,
                             password:hash,
+                            gender:req.body.gender,
                             image:req.body.image,
                             dob:req.body.dob
                         }).then((user) =>{
@@ -52,7 +55,7 @@ route.post('/register',(req,res,next) =>{
 
                               transporter.sendMail(mailOptions, function (err, info) {
                                 if(err){
-                                    res.send(err) 
+                                    res.json({status:500, message:err})
                                 } 
                                 else{
                                     let token=jwttoken.sign({_id:user._id}, process.env.SECRET);
@@ -65,9 +68,10 @@ route.post('/register',(req,res,next) =>{
         }
         
         else{
-            let err=new Error('Email already registered');
-            err.status=401;
-            return next(err);
+            // let err=new Error('Email already registered');
+            // err.status=401;
+            // return next(err);
+            res.json({status:401, message:"Email already registered"})
         }
     });
 });
@@ -78,22 +82,28 @@ route.post('/login',(req,res,next)=>{
     .then((user)=>{
         if(user==null)
         {
-            let err=new Error('User not registered');
-            err.status=401;
-            return next(err);
+            // let err=new Error('User not registered');
+            // err.status=401;
+            // return next(err);
+            res.status(401)
+            res.json({status:401, message:'User not registered'})
         }else if(user.verify==false)
         {
-            let err=new Error('Please verify your account');
-            err.status=401;
-            return next(err);
+            // let err=new Error('Please verify your account');
+            // err.status=401;
+            // return next(err);
+            res.status(401)
+            res.json({status:401, message:'Please verify your account'})
         }
         else{
             bcrypt.compare(req.body.password,user.password)
             .then((isMatch)=>{
                 if(!isMatch){
-                    let err=new Error('Password not valid');
-                    err.status=401;
-                    return next(err);
+                    // let err=new Error('Password not valid');
+                    // err.status=401;
+                    // return next(err);
+                    res.status(401)
+            res.json({status:401, message:'Password not valid'})
                 }
                 let token=jwttoken.sign({_id: user._id}, process.env.SECRET);
                 res.json({status:'You have logged!!!', token:token});
@@ -109,7 +119,11 @@ route.get('/verify/:id', (req,res,next)=>{
     .then((user)=>{
         if(user==null){
             res.json("No user to verify");
-        }else{
+        }
+        else if(user.verify==true){
+            res.json('You are already verified')
+        }
+        else{
             User.update({_id:id},
                {
                    verify:true
@@ -124,6 +138,7 @@ route.get('/verify/:id', (req,res,next)=>{
 })
 
 route.get('/userProfile', auth.verifyUser,(req,res)=>{
+
     res.json(
         {
         _id:req.user._id,
@@ -136,6 +151,36 @@ route.get('/userProfile', auth.verifyUser,(req,res)=>{
     }
     );
 });
+
+route.post('/forgot-password', (req,res)=>{
+    User.findOne({emailPhone:req.body.emailPhone})
+    .then((user)=>{
+        if(user==null){
+            res.json("User not found")
+        }else{
+            let decryptPassword=bcrypt.decryptPassword
+            
+        //     var mailOptions = {
+        //         from: process.env.MAILUSER, // sender address
+        //         to: req.body.emailPhone, // list of receivers
+        //         subject: 'Email confirmation for your account: Social Media App', // Subject line
+        //         html: req.body.firstName + req.body.lastName+
+        //         '<h1>Your password is  </h1> '+ user.password
+        //       // plain text body
+        //       };
+
+        //       transporter.sendMail(mailOptions, function (err, info) {
+        //         if(err){
+        //             res.send(err) 
+        //         } 
+        //         else{
+        //             res.json({user})
+        //         }
+        // });
+    
+        }
+    })
+})
 
 
 module.exports = route;

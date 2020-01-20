@@ -2,7 +2,7 @@ const mongoose=require('mongoose');
 const userSchema=new mongoose.Schema({
     firstName:{
         type:String,
-        require:true,
+       require:true,
     },
     lastName:{
         type:String,
@@ -21,16 +21,24 @@ const userSchema=new mongoose.Schema({
         type:String
     },
     dob:{
-        type:Date
+        type:String,
+        required:true
+    },
+    gender:{
+        type:String,
+        required:true
     },
     reg_date:{
-        type:Date,
-        default:new Date()
+        type:String,
+        required:true,
+        default:Date.now
     },
     verify:{
         type:Boolean,
+        required:true,
         default:false
-    }
+    },
+
 })
 
 module.exports = mongoose.model('User', userSchema);

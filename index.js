@@ -4,13 +4,14 @@ const morgan=require('morgan');
 const dotenv=require('dotenv').config();
 const cors=require('cors');
 const userRoute=require('./controllers/users');
+const postRoute=require('./controllers/posts')
 const auth=require('./auth/authentication');
 const uploadImageRoute=require("./controllers/profileImageUpload")
 
 const app=express();
 app.use(morgan('tiny'));
 app.use(express.json());
-app.options('*',cors());
+app.use(cors());
 app.use(express.urlencoded({extended:true}))
 app.use(express.static(__dirname+ "/public"))
 
@@ -23,6 +24,7 @@ mongoose.connect(process.env.URL,{useNewUrlParser:true,useUnifiedTopology:true, 
 app.use('/users',userRoute);
 app.use('/uploadProfile',uploadImageRoute);
 app.use(auth.verifyUser);
+app.use('/posts', postRoute)
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
